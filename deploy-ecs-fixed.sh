@@ -60,14 +60,14 @@ ${YELLOW}EXEMPLOS:${NC}
     $0 build && $0 deploy
 
     # Rollback para versão específica
-    $0 rollback -v v1.0.0-abc123f-20250803-175300
+    $0 rollback -v v4.2.0-abc123f-20250803-175300
 
     # Listar versões disponíveis
     $0 list
 
 ${YELLOW}ESTRUTURA DE VERSIONAMENTO:${NC}
-    As imagens são taggeadas com: v1.0.0-{commit-hash}-{timestamp}
-    Exemplo: v1.0.0-abc123f-20250803-175300
+    As imagens são taggeadas com: v{package-version}-{commit-hash}-{timestamp}
+    Exemplo: v4.2.0-abc123f-20250803-175300
     
     Também são criadas tags adicionais:
     - latest: Sempre aponta para a última build
@@ -123,9 +123,14 @@ check_prerequisites() {
 get_version_info() {
     local commit_hash=$(git rev-parse --short=7 HEAD)
     local timestamp=$(date +%Y%m%d-%H%M%S)
-    local version="v1.0.0-${commit_hash}-${timestamp}"
+    # Tentar obter versão do package.json, senão usar padrão
+    local package_version="1.0.0"
+    if [ -f "package.json" ] && command -v jq &> /dev/null; then
+        package_version=$(jq -r '.version' package.json 2>/dev/null || echo "1.0.0")
+    fi
+    local version="v${package_version}-${commit_hash}-${timestamp}"
     
-    echo "$version|$commit_hash|$timestamp"
+    echo "$version|$commit_hash|$timestamp|$package_version"
 }
 
 # Função para obter account ID
@@ -147,9 +152,11 @@ build_image() {
     local version=$(echo "$version_info" | cut -d'|' -f1)
     local commit_hash=$(echo "$version_info" | cut -d'|' -f2)
     local timestamp=$(echo "$version_info" | cut -d'|' -f3)
+    local package_version=$(echo "$version_info" | cut -d'|' -f4)
     
     local ecr_base="$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$ECR_REPO"
     
+    log "INFO" "Package Version: $package_version"
     log "INFO" "Versão completa: $version"
     log "INFO" "Commit hash: $commit_hash"
     log "INFO" "Timestamp: $timestamp"

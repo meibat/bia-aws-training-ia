@@ -22,9 +22,16 @@ echo -e "${BLUE}=== Build Script Versionado - Projeto BIA ===${NC}"
 # Obter informações de versão
 COMMIT_HASH=$(git rev-parse --short=7 HEAD)
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-VERSION="v1.0.0-${COMMIT_HASH}-${TIMESTAMP}"
+# Tentar obter versão do package.json, senão usar padrão
+if [ -f "package.json" ] && command -v jq &> /dev/null; then
+    PACKAGE_VERSION=$(jq -r '.version' package.json 2>/dev/null || echo "1.0.0")
+else
+    PACKAGE_VERSION="1.0.0"
+fi
+VERSION="v${PACKAGE_VERSION}-${COMMIT_HASH}-${TIMESTAMP}"
 
 echo -e "${YELLOW}Informações da Build:${NC}"
+echo "  Package Version: $PACKAGE_VERSION"
 echo "  Commit Hash: $COMMIT_HASH"
 echo "  Timestamp: $TIMESTAMP"
 echo "  Versão: $VERSION"
