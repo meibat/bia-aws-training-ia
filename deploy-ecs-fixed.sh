@@ -9,9 +9,9 @@ set -e
 
 # Configurações padrão
 DEFAULT_REGION="us-east-1"
-DEFAULT_CLUSTER="cluster-bia"
-DEFAULT_SERVICE="service-bia"
-DEFAULT_TASK_DEFINITION="task-def-bia"
+DEFAULT_CLUSTER="cluster-bia-alb"
+DEFAULT_SERVICE="service-bia-alb"
+DEFAULT_TASK_DEFINITION="task-def-bia-alb"
 DEFAULT_ECR_REPO="bia"
 
 # Cores para output

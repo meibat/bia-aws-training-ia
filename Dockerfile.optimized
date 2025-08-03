@@ -1,0 +1,33 @@
+FROM public.ecr.aws/docker/library/node:22-slim
+
+# Instalar dependências do sistema em uma única camada
+RUN apt-get update && \
+    apt-get install -y curl && \
+    npm install -g npm@11 --loglevel=error && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /usr/src/app
+
+# Copiar e instalar dependências do backend
+COPY package*.json ./
+RUN npm install --loglevel=error --production=false
+
+# Copiar e instalar dependências do frontend
+COPY client/package*.json ./client/
+RUN cd client && npm install --legacy-peer-deps --loglevel=error
+
+# Copiar código fonte
+COPY . .
+
+# Build do frontend
+RUN cd client && \
+    VITE_API_URL=http://bia-alb-1711960252.us-east-1.elb.amazonaws.com npm run build && \
+    npm prune --production && \
+    rm -rf node_modules/.cache
+
+# Limpar dependências de desenvolvimento do backend
+RUN npm prune --production
+
+EXPOSE 8080
+
+CMD [ "npm", "start" ]
